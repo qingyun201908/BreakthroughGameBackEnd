@@ -8,10 +8,10 @@ import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 
 
 @EnableJpaRepositories(basePackages = {
-        "BreakthroughGame.backEnd.UserModule.UserInfo.repository"
+        "BreakthroughGame.backEnd.UserModule.UserInfo.repository","BreakthroughGame.backEnd.WarcraftDungeonsInfo.repository"
 })
 @EntityScan(basePackages = {
-        "BreakthroughGame.backEnd.UserModule.UserInfo.entity"
+        "BreakthroughGame.backEnd.UserModule.UserInfo.entity","BreakthroughGame.backEnd.WarcraftDungeonsInfo.entity"
 })
 @SpringBootApplication(scanBasePackages = {"BreakthroughGame.backEnd"})
 public class UserAuthApplication {

@@ -77,6 +77,13 @@
             <version>10.10.0</version>
         </dependency>
 
+        <!-- 解析 Excel：Apache POI -->
+        <dependency>
+            <groupId>org.apache.poi</groupId>
+            <artifactId>poi-ooxml</artifactId>
+            <version>5.2.5</version>
+        </dependency>
+
 <!--        &lt;!&ndash; JWT &ndash;&gt;-->
 <!--        <dependency>-->
 <!--            <groupId>io.jsonwebtoken</groupId>-->
