@@ -1,0 +1,29 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/userdb
+    username: postgres
+    password: 123456
+    driver-class-name: org.postgresql.Driver   # 可选，写上更直观
+    hikari:
+      maximum-pool-size: 10
+      minimum-idle: 2
+      idle-timeout: 600000
+      connection-timeout: 30000
+      pool-name: user-pool
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate.format_sql: true
+    show-sql: false
+  flyway:
+    enabled: true
+    locations: classpath:db
+
+# 中文备注：初始经验可按需求调整；留空或不配即为 0
+game:
+  character:
+    initial-xp: 0
+security:
+  password:
+    pepper: ""   # 中文备注：若需要全局 pepper，可在此配置

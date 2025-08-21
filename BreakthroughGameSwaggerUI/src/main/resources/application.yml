@@ -1,0 +1,32 @@
+server:
+  port: 9090
+
+docs:
+  services:
+    - id: user
+      name: 用户服务
+      baseUrl: http://127.0.0.1:8080
+#    - id: order
+#      name: 订单服务
+#      baseUrl: http://10.0.0.6:8082
+#    - id: inventory
+#      name: 库存服务
+#      baseUrl: http://10.0.0.7:8083
+
+springdoc:
+  api-docs:
+    enabled: true
+  swagger-ui:
+    disable-swagger-default-url: true
+    enabled: true
+    show-urls: true
+    # 注意：下面这些 URL 都是本地代理路径，不会跨域
+    urls:
+      - name: 用户服务
+        url: /proxy/user/v3/api-docs
+#      - name: 订单服务
+#        url: /proxy/order/v3/api-docs
+#      - name: 库存服务
+#        url: /proxy/inventory/v3/api-docs
+    webjars:
+      enabled: true
