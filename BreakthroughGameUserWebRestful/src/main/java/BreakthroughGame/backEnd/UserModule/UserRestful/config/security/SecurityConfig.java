@@ -71,6 +71,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/auth/**").permitAll()             // ✅ 你的注册/登录放行
                         .requestMatchers("/api/characters/**").permitAll()             // ✅ 经验值系统放行
                         .requestMatchers("/api/dungeons/import/**").permitAll()             // ✅ 副本导入放行
+                        .requestMatchers("/api/dungeons/**").permitAll()             // ✅ 副本查询放行
+
                         // .requestMatchers("/actuator/**").permitAll()          // （可选）放行健康检查
                         .anyRequest().authenticated()                            // 其余都需要认证
                 )
