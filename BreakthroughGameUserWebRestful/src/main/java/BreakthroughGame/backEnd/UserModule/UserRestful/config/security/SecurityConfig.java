@@ -21,7 +21,7 @@ import java.util.Map;
 public class SecurityConfig {
 
     // 中文备注：Swagger / OpenAPI 资源白名单（springdoc 2.x 默认路径）
-    private static final String[] SWAGGER_WHITELIST = new String[] {
+    private static final String[] SWAGGER_WHITELIST = new String[]{
             "/v3/api-docs/**",         // OpenAPI JSON
             "/v3/api-docs.yaml",       // OpenAPI YAML（可选）
             "/swagger-ui.html",        // 旧入口（会重定向）
@@ -72,6 +72,8 @@ public class SecurityConfig {
                         .requestMatchers("/api/characters/**").permitAll()             // ✅ 经验值系统放行
                         .requestMatchers("/api/dungeons/import/**").permitAll()             // ✅ 副本导入放行
                         .requestMatchers("/api/dungeons/**").permitAll()             // ✅ 副本查询放行
+                        .requestMatchers("/api/dungeonDaily/**").permitAll()             // ✅ 角色副本查询放行
+                        .requestMatchers("/api/dungeonRun/**").permitAll()             // ✅ 角色副本日志登记
 
                         // .requestMatchers("/actuator/**").permitAll()          // （可选）放行健康检查
                         .anyRequest().authenticated()                            // 其余都需要认证
