@@ -73,7 +73,12 @@ public class SecurityConfig {
                         .requestMatchers("/api/dungeons/import/**").permitAll()             // ✅ 副本导入放行
                         .requestMatchers("/api/dungeons/**").permitAll()             // ✅ 副本查询放行
                         .requestMatchers("/api/dungeonDaily/**").permitAll()             // ✅ 角色副本查询放行
-                        .requestMatchers("/api/dungeonRun/**").permitAll()             // ✅ 角色副本日志登记
+                        .requestMatchers("/api/dungeonRun/**").permitAll()             // ✅ 角色副本日志登记放行
+                        .requestMatchers("/api/equipment/**").permitAll()             // ✅ 装备图鉴放行
+
+                        .requestMatchers("/api/definition/equipment/**").permitAll()             // ✅ 装备图鉴放行
+
+
 
                         // .requestMatchers("/actuator/**").permitAll()          // （可选）放行健康检查
                         .anyRequest().authenticated()                            // 其余都需要认证

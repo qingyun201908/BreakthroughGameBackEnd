@@ -23,6 +23,7 @@
         <module>BreakthroughGameSwaggerUI</module>
         <module>BreakthroughGameUtils</module>
         <module>BreakthroughGameWarcraftDungeons</module>
+        <module>BreakthroughGameDefinition</module>
     </modules>
 
     <properties>
