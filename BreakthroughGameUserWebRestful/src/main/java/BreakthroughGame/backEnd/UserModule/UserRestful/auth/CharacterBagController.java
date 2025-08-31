@@ -28,7 +28,8 @@ import java.util.UUID;
         origins = { "http://localhost:9000", "http://127.0.0.1:9000","http://127.0.0.1:5173","http://localhost:5173" },
         allowCredentials = "true",
         maxAge = 3600
-)public class CharacterBagController {
+)
+public class CharacterBagController {
 
     private final CharacterBagService bagService;
 

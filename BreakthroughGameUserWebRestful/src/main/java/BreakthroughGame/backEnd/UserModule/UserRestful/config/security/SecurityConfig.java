@@ -76,6 +76,9 @@ public class SecurityConfig {
                         .requestMatchers("/api/dungeonRun/**").permitAll()             // ✅ 角色副本日志登记放行
                         .requestMatchers("/api/equipment/**").permitAll()             // ✅ 装备图鉴放行
                         .requestMatchers("/api/definition/equipment/**").permitAll()             // ✅ 装备图鉴放行
+                        .requestMatchers("/api/character/equipment/**").permitAll()             // ✅ 角色穿戴装备
+                        .requestMatchers("/api/character/**").permitAll()             // ✅ 角色可穿戴装备
+
                         // .requestMatchers("/actuator/**").permitAll()          // （可选）放行健康检查
                         .anyRequest().authenticated()                            // 其余都需要认证
                 )
