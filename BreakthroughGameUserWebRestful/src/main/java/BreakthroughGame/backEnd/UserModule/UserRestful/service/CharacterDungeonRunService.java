@@ -1,9 +1,12 @@
 // 文件：BreakthroughGame/backEnd/UserModule/UserRestful/service/CharacterDungeonRunService.java
 package BreakthroughGame.backEnd.UserModule.UserRestful.service;
 
-import BreakthroughGame.backEnd.UserModule.UserRestful.dto.CharacterDailyMapper;   // 中文备注：你现有的 Mapper（dto 包下）
-import BreakthroughGame.backEnd.UserModule.UserRestful.dto.CharacterDailyVO;
-import BreakthroughGame.backEnd.UserModule.UserRestful.dto.DungeonPassResult;
+import BreakthroughGame.backEnd.DefinitionModule.entity.EquipmentDefinition;
+import BreakthroughGame.backEnd.DefinitionModule.entity.EquipmentDefinitionDungeon;
+import BreakthroughGame.backEnd.DefinitionModule.entity.ItemType;
+import BreakthroughGame.backEnd.DefinitionModule.repository.EquipmentDefinitionDungeonRepository;
+import BreakthroughGame.backEnd.DefinitionModule.repository.EquipmentDefinitionRepository;
+import BreakthroughGame.backEnd.UserModule.UserRestful.dto.*;
 import BreakthroughGame.backEnd.UserModule.UserRestful.request.DungeonPassRequest;
 import BreakthroughGame.backEnd.WarcraftDungeonsInfo.entity.CharacterDungeonDaily;
 import BreakthroughGame.backEnd.WarcraftDungeonsInfo.entity.DungeonDefinition;
@@ -19,8 +22,11 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneId;
+import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.ThreadLocalRandom;
+import java.util.stream.Collectors;
 
 /**
  * 中文备注：通关上报服务
@@ -35,8 +41,84 @@ public class CharacterDungeonRunService {
     private final DungeonRunLogRepository runLogRepo;
     private final DungeonDefinitionRepository defRepo;
 
+
+    // ================== 新增依赖 ==================
+    private final EquipmentDefinitionRepository equipDefRepo;                // 中文备注：装备图鉴主表
+    private final EquipmentDefinitionDungeonRepository equipDungeonRepo;     // 中文备注：图鉴-副本映射（equip_key <-> dungeon_key）
+    private final CharacterBagService bagService;                            // 中文备注：人物背包服务
+    // ==============================================
+
+    private final CharacterDungeonDailyQueryService dailyQueryService; // 中文备注：新增依赖，用于拿“今日快照视图 VO”
+
     /** 中文备注：与实体注释保持一致，按 JST 计算业务日 */
     public static final ZoneId ZONE_JST = ZoneId.of("Asia/Tokyo");
+
+
+
+    /**
+     * 中文备注：通关 + 随机掉落 1 件 + 入背包；返回“通关+掉落”的组合视图
+     */
+    @Transactional
+    public DungeonPassView passAndLoot(DungeonPassRequest req) {
+        // 1) 先走你已有的通关入库与计数逻辑
+        DungeonPassResult pass = recordPass(req);
+
+        // 2) 根据副本配置随机 1 件装备（无配置则为 null，不抛错）
+        EquipmentDefinition drop = randomOneByDungeon(req.getDungeonKey());
+
+        LootItemVO lootVO = null;
+        if (drop != null) {
+            // 3) 入背包（相同 item_key 叠加）
+            int rarityInt = (drop.getRarity() == null) ? 1 : (drop.getRarity().ordinal() + 1);  // 中文备注：枚举转 1~N
+            String desc = (drop.getDescription() == null) ? ("来源副本：" + req.getDungeonKey()) : drop.getDescription();
+
+            bagService.addItem(
+                    req.getCharacterId(),         // 中文备注：角色 UUID
+                    drop.getEquipKey(),           // 中文备注：物品 key（与前端一致）
+                    drop.getName(),               // 中文备注：名称冗余
+                    ItemType.equipment,           // 中文备注：类型=装备
+                    rarityInt,                    // 中文备注：稀有度 int
+                    desc,                         // 中文备注：描述冗余
+                    1                             // 中文备注：数量 +1
+            );
+
+            // 4) 组装返回给前端的掉落 VO（含 icon/description）
+            lootVO = LootItemVO.builder()
+                    .equipKey(drop.getEquipKey())
+                    .name(drop.getName())
+                    .rarity(rarityInt)
+                    .rarityName(drop.getRarity() == null ? "COMMON" : drop.getRarity().name())
+                    .icon(drop.getIcon())                // 中文备注：字段来自 EquipmentDefinition.icon
+                    .description(drop.getDescription())  // 中文备注：字段来自 EquipmentDefinition.description
+                    .build();
+        }
+        ensureTodayDaily(pass, req);              // 中文备注：强制把今日快照塞进 pass.daily
+
+        return DungeonPassView.builder().pass(pass).loot(lootVO).build();
+    }
+
+    /** 中文备注：补齐今日快照到 pass.daily（不覆盖已有值） */
+    private void ensureTodayDaily(DungeonPassResult pass, DungeonPassRequest req) {
+        if (pass == null) return;
+        if (pass.getDaily() != null) return;  // 中文备注：recordPass 已经给了就不覆盖
+
+        // 中文备注：拿“今日快照视图 VO”（字段：runsUsed / runsMax / selected / canChallenge / ...）
+        var todayView = dailyQueryService.getOne(req.getCharacterId(), req.getDungeonKey(),LocalDate.now(ZONE_JST));
+
+        // 中文备注：塞回 pass（类型按你的 DTO 来）
+        pass.setDaily(todayView);
+    }
+
+    /** 中文备注：从当前副本掉落池中随机抽 1 件；无配置返回 null */
+    private EquipmentDefinition randomOneByDungeon(String dungeonKey) {
+        List<EquipmentDefinitionDungeon> mappings = equipDungeonRepo.findAllByDungeonKey(dungeonKey);
+        if (mappings == null || mappings.isEmpty()) return null;
+        List<String> keys = mappings.stream().map(EquipmentDefinitionDungeon::getEquipKey).collect(Collectors.toList());
+        String equipKey = keys.get(ThreadLocalRandom.current().nextInt(keys.size()));
+        return equipDefRepo.findByEquipKey(equipKey).orElse(null);
+    }
+
+
 
     @Transactional
     public DungeonPassResult recordPass(DungeonPassRequest req) {

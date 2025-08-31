@@ -9,5 +9,6 @@ import java.util.List;
 
 public interface EquipmentDefinitionDungeonRepository extends JpaRepository<EquipmentDefinitionDungeon, PK> {
     List<EquipmentDefinitionDungeon> findByEquipKey(String equipKey);     // 中文备注：按装备键取来源副本
+    List<EquipmentDefinitionDungeon> findAllByDungeonKey(String dungeonKey); // 中文备注：用于按副本找掉落池
     void deleteByEquipKey(String equipKey);                               // 覆盖式更新时先删
 }

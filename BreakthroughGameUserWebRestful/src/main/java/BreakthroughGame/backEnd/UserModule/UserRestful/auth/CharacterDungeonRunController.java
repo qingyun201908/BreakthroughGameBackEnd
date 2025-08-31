@@ -2,6 +2,7 @@
 package BreakthroughGame.backEnd.UserModule.UserRestful.auth;
 
 import BreakthroughGame.backEnd.UserModule.UserRestful.dto.DungeonPassResult;
+import BreakthroughGame.backEnd.UserModule.UserRestful.dto.DungeonPassView;
 import BreakthroughGame.backEnd.UserModule.UserRestful.request.DungeonPassRequest;
 import BreakthroughGame.backEnd.UserModule.UserRestful.response.AllResponse;
 import BreakthroughGame.backEnd.UserModule.UserRestful.response.DungeonPassResponse;
@@ -37,33 +38,23 @@ public class CharacterDungeonRunController {
 
     private final CharacterDungeonRunService service;
 
+
     @Operation(
-            summary = "上报通关结果（幂等）",
-            description = "接受角色-关卡通过记录；同一 traceId 重复上报不重复计数；业务日以 Asia/Tokyo 计算。",
+            summary = "上报通关结果（含掉落详情与背包入账）",
             responses = {
                     @ApiResponse(responseCode = "200", description = "OK",
                             content = @Content(schema = @Schema(implementation = DungeonPassResponse.class)))
             }
     )
-    @PostMapping(value = "/pass")
-    public AllResponse pass(@Valid @RequestBody DungeonPassRequest req) {
-        String rid = UUID.randomUUID().toString().substring(0, 8);
+    @PostMapping("/pass")
+    public DungeonPassResponse pass(@Valid @RequestBody DungeonPassRequest req) { // 中文备注：返回专用响应
+        final String rid = java.util.UUID.randomUUID().toString();
+        final long startNs = System.nanoTime();
         MDC.put("rid", rid);
-        long startNs = System.nanoTime();
         try {
-            DungeonPassResult result = service.recordPass(req);
-
-            String msg = switch (result.getResultCode()) {
-                case "OK" -> "记录成功，已计入当日次数";
-                case "NO_TIMES" -> "记录成功，但今日次数已用尽，未计入";
-                case "DUPLICATE" -> "重复上报，已返回现有结果";
-                case "INVALID_DUNGEON" -> "副本不可用或不存在";
-                default -> "处理完成";
-            };
-            return DungeonPassResponse.ok(msg, result);
-        } catch (IllegalArgumentException ex) {
-            LOGGER.warn("BIZ|RUN_PASS_BAD_REQ|rid={}|msg={}", rid, ex.getMessage(), ex);
-            throw ex;
+            DungeonPassView view = service.passAndLoot(req);   // 中文备注：通关 + 掉落 + 入背包
+            String msg = (view.getLoot() == null) ? "通关成功（无掉落配置）" : "通关成功，掉落已发放";
+            return DungeonPassResponse.ok(msg, view);          // 中文备注：data=通关+掉落
         } catch (Exception ex) {
             LOGGER.error("BIZ|RUN_PASS_ERR|rid={}|ex={}", rid, ex.toString(), ex);
             throw ex;
