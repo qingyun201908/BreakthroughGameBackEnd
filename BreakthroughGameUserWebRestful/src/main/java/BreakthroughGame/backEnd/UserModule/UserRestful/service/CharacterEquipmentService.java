@@ -25,6 +25,8 @@ public class CharacterEquipmentService {
     private final CharacterEquipmentHistoryRepository hisRepo;
     private final CharacterBagItemRepository bagRepo;
     private final EquipmentDefinitionRepository defRepo;
+    private final CharacterAttributeRecalcService attrRecalcService; // ✅ 注入重算服务
+
 
     /** 中文备注：列出角色当前穿戴（按槽位） */
     public List<CharacterEquipment> list(UUID characterId){
@@ -114,6 +116,7 @@ public class CharacterEquipmentService {
         row.setDescription(def.getDescription());     // 中文备注：图鉴里若有 description 字段
         row.setBagItemId(bag.getId());
         equipRepo.save(row);
+        attrRecalcService.recalcAndSave(characterId);
 
         return row;
     }
@@ -147,6 +150,7 @@ public class CharacterEquipmentService {
 
         // 删除穿戴记录
         equipRepo.delete(old);
+        attrRecalcService.recalcAndSave(characterId);
 
         // 历史
         CharacterEquipmentHistory h = new CharacterEquipmentHistory();
